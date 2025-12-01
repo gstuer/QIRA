@@ -18,9 +18,13 @@ dependencies {
         implementation("org.apache.commons:commons-text:1.13.0")
     }
 
+    implementation("com.google.guava:guava:33.+")
+    implementation("commons-cli:commons-cli:1.+")
+    implementation("org.apache.commons:commons-lang3:3.+")
+    implementation("com.google.code.gson:gson:2+")
+
     // Use JUnit Jupiter for testing.
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.1")
-
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -34,4 +38,9 @@ java {
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+tasks.jar.configure {
+    from(configurations.runtimeClasspath.get().map(::zipTree))
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
