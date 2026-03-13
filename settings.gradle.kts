@@ -4,4 +4,4 @@ plugins {
 }
 
 rootProject.name = "QIRA"
-include("controller", "enforcer", "core")
+include("authority", "enforcer", "core")

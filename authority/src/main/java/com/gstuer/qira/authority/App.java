@@ -1,4 +1,4 @@
-package com.gstuer.qira.controller;
+package com.gstuer.qira.authority;
 
 public class App {
     public static void main(String[] args) {

@@ -4,7 +4,7 @@ plugins {
 
 application {
     // Define the main class for the application.
-    mainClass = "com.gstuer.qira.controller.App"
+    mainClass = "com.gstuer.qira.authority.App"
 }
 
 dependencies {
@@ -18,6 +18,6 @@ dependencies {
 tasks.jar.configure {
     dependsOn(project(":core").tasks.named("jar"))
     manifest {
-        attributes(mapOf("Main-Class" to "com.gstuer.qira.controller.App"))
+        attributes(mapOf("Main-Class" to "com.gstuer.qira.authority.App"))
     }
 }

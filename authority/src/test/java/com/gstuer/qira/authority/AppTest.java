@@ -1,4 +1,4 @@
-package com.gstuer.qira.controller;
+package com.gstuer.qira.authority;
 
 import org.junit.jupiter.api.Test;
 
