@@ -20,4 +20,12 @@ tasks.jar.configure {
     manifest {
         attributes(mapOf("Main-Class" to "com.gstuer.qira.enforcer.App"))
     }
+
+    // Exclude signature files from third party jars
+    exclude("META-INF/*.SF")
+    exclude("META-INF/*.DSA")
+    exclude("META-INF/*.RSA")
+
+    from(configurations.runtimeClasspath.get().map(::zipTree))
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
