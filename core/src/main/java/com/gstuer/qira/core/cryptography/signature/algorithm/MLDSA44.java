@@ -16,6 +16,7 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 /**
@@ -74,7 +75,7 @@ public class MLDSA44 extends Authenticator<PrivateKey, PublicKey> {
             // Since the algorithm is static, this exception might only be thrown in case of an incompatible platform
             throw new UnsupportedOperationException(exception);
         }
-        PrivateKey privateKey = keyFactory.generatePrivate(new X509EncodedKeySpec(encodedSigningKey.getKey()));
+        PrivateKey privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(encodedSigningKey.getKey()));
         this.setSigningKey(privateKey);
     }
 
