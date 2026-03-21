@@ -1,9 +1,14 @@
 package com.gstuer.qira.core.cryptography;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class EncodedKey {
+public class EncodedKey implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1047243589102980540L;
+
     private final String algorithmIdentifier;
     private final byte[] key;
 
