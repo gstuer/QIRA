@@ -26,6 +26,20 @@ public abstract class Authenticator<S extends Key, V extends Key> implements Sig
 
     public abstract Verifier<V> getShareableVerifier();
 
+    @Override
+    public boolean equals(Object object) {
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        Authenticator<?, ?> that = (Authenticator<?, ?>) object;
+        return Objects.equals(this.signingKey, that.signingKey) && Objects.equals(this.verificationKey, that.verificationKey);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.signingKey, this.verificationKey);
+    }
+
     protected S getSigningKey() {
         return this.signingKey;
     }
