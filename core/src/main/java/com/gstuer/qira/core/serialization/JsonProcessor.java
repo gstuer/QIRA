@@ -3,13 +3,20 @@ package com.gstuer.qira.core.serialization;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-import com.gstuer.qira.core.cryptography.signature.Authenticator;
+import com.gstuer.qira.core.cryptography.signature.Verifier;
 import com.gstuer.qira.core.cryptography.signature.algorithm.AES256GMAC;
 import com.gstuer.qira.core.cryptography.signature.algorithm.HmacSHA256;
 import com.gstuer.qira.core.cryptography.signature.algorithm.MLDSA44;
 import com.gstuer.qira.core.cryptography.signature.algorithm.MLDSA65;
 import com.gstuer.qira.core.cryptography.signature.algorithm.MLDSA87;
+import com.gstuer.qira.core.identity.query.EnforcerQuery;
+import com.gstuer.qira.core.identity.query.GuardedQuery;
+import com.gstuer.qira.core.identity.query.IdentityQuery;
 import com.gstuer.qira.core.message.AuthenticatedMessage;
+import com.gstuer.qira.core.message.BindingQueryRequest;
+import com.gstuer.qira.core.message.BindingQueryResponse;
+import com.gstuer.qira.core.message.BindingRegistrationRequest;
+import com.gstuer.qira.core.message.BindingRegistrationResponse;
 import com.gstuer.qira.core.message.EncryptedMessage;
 import com.gstuer.qira.core.message.Message;
 import com.gstuer.qira.core.message.PayloadExchangeMessage;
@@ -55,6 +62,10 @@ public class JsonProcessor {
                 .registerSubtype(AuthenticatedMessage.class)
                 .registerSubtype(EncryptedMessage.class)
                 .registerSubtype(PayloadExchangeMessage.class)
+                .registerSubtype(BindingRegistrationRequest.class)
+                .registerSubtype(BindingRegistrationResponse.class)
+                .registerSubtype(BindingQueryRequest.class)
+                .registerSubtype(BindingQueryResponse.class)
 //                .registerSubtype(KeyExchangeMessage.class)
 //                .registerSubtype(KeyEstablishmentRequestMessage.class)
 //                .registerSubtype(KeyEstablishmentResponseMessage.class)
@@ -62,15 +73,23 @@ public class JsonProcessor {
         builder.registerTypeAdapterFactory(messageAdapterFactory);
 
         // Type factory for identity queries
-        RuntimeTypeAdapterFactory<?> authenticatorAdapterFactory = RuntimeTypeAdapterFactory
-                .of(Authenticator.class)
+        RuntimeTypeAdapterFactory<?> identityQueryAdapterFactory = RuntimeTypeAdapterFactory
+                .of(IdentityQuery.class)
+                .registerSubtype(EnforcerQuery.class)
+                .registerSubtype(GuardedQuery.class)
+                .recognizeSubtypes();
+        builder.registerTypeAdapterFactory(identityQueryAdapterFactory);
+
+        // Type factory for verifiers
+        RuntimeTypeAdapterFactory<?> verifierAdapterFactory = RuntimeTypeAdapterFactory
+                .of(Verifier.class)
                 .registerSubtype(AES256GMAC.class)
                 .registerSubtype(HmacSHA256.class)
                 .registerSubtype(MLDSA44.class)
                 .registerSubtype(MLDSA65.class)
                 .registerSubtype(MLDSA87.class)
                 .recognizeSubtypes();
-        builder.registerTypeAdapterFactory(authenticatorAdapterFactory);
+        builder.registerTypeAdapterFactory(verifierAdapterFactory);
 
         this.gson = builder.create();
     }
