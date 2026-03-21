@@ -3,6 +3,7 @@ package com.gstuer.qira.core.cryptography.signature.algorithm;
 import com.gstuer.qira.core.cryptography.EncodedKey;
 import com.gstuer.qira.core.cryptography.signature.Authenticator;
 import com.gstuer.qira.core.cryptography.signature.DigitalSignature;
+import com.gstuer.qira.core.cryptography.signature.Verifier;
 import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.macs.GMac;
 import org.bouncycastle.crypto.modes.GCMBlockCipher;
@@ -12,6 +13,7 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.Serial;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -22,6 +24,8 @@ public class AES256GMAC extends Authenticator<SecretKey, SecretKey> {
     public static final int KEY_LENGTH = 256;
     public static final int TAG_LENGTH = 128;
     public static final int INITIALIZATION_VECTOR_BYTE = 16;
+    @Serial
+    private static final long serialVersionUID = 1932665552233124268L;
 
     @Override
     public void initializeKeyPair() {
@@ -36,6 +40,14 @@ public class AES256GMAC extends Authenticator<SecretKey, SecretKey> {
         SecretKey key = keyGenerator.generateKey();
         this.setSigningKey(key);
         this.setVerificationKey(key);
+    }
+
+    @Override
+    public Verifier<SecretKey> getShareableVerifier() {
+        // Create new verifier from authenticator omitting the signing key
+        Verifier<SecretKey> verifier = new AES256GMAC();
+        verifier.setVerificationKey(this.getVerificationKey());
+        return verifier;
     }
 
     @Override

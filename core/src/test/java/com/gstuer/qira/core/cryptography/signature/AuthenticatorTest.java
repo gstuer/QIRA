@@ -1,5 +1,6 @@
 package com.gstuer.qira.core.cryptography.signature;
 
+import com.gstuer.qira.core.serialization.JsonProcessor;
 import org.junit.jupiter.api.Test;
 
 import java.security.InvalidKeyException;
@@ -7,8 +8,7 @@ import java.security.SignatureException;
 import java.time.Duration;
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class AuthenticatorTest<T extends Authenticator<?, ?>> {
     private final T authenticator;
@@ -50,6 +50,25 @@ public abstract class AuthenticatorTest<T extends Authenticator<?, ?>> {
         System.out.println("Signature Byte: " + signature.getData().length);
         System.out.println("Sign Duration (ms): " + signDuration.toNanos() / Math.pow(10, 6));
         System.out.println("Verify Duration (ms): " + verifyDuration.toNanos() / Math.pow(10, 6));
+    }
+
+    @Test
+    public void testShareableVerifierIsSecureAndSerializable() throws Throwable {
+        Authenticator<?, ?> authenticator = this.getAuthenticator();
+        Verifier<?> verifier = authenticator.getShareableVerifier();
+
+        // Check that verifier is correct and does not contain singing key material
+        assertEquals(authenticator.getClass(), verifier.getClass()); // Same auth. class
+        assertEquals(authenticator.getVerificationKey(), verifier.getVerificationKey()); // Same verif. key
+        assertNotNull(authenticator.getSigningKey()); // Auth. had signing key
+        assertNull(((Authenticator<?, ?>) verifier).getSigningKey()); // Verify has no signing key
+
+        // Check that verifier is serializable and deserializable
+        JsonProcessor jsonProcessor = new JsonProcessor();
+        Verifier<?> deserialVerifier = (Authenticator<?, ?>) jsonProcessor.deserialize(jsonProcessor.serialize(verifier), Authenticator.class);
+        assertEquals(verifier.getClass(), deserialVerifier.getClass());
+        assertEquals(verifier.getAlgorithmIdentifier(), deserialVerifier.getAlgorithmIdentifier());
+        assertEquals(verifier.getVerificationKey(), deserialVerifier.getVerificationKey());
     }
 
     protected abstract T constructAuthenticator();

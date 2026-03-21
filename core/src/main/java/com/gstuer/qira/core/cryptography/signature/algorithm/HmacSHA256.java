@@ -3,10 +3,12 @@ package com.gstuer.qira.core.cryptography.signature.algorithm;
 import com.gstuer.qira.core.cryptography.EncodedKey;
 import com.gstuer.qira.core.cryptography.signature.Authenticator;
 import com.gstuer.qira.core.cryptography.signature.DigitalSignature;
+import com.gstuer.qira.core.cryptography.signature.Verifier;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.Serial;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -14,6 +16,8 @@ import java.security.spec.InvalidKeySpecException;
 
 public class HmacSHA256 extends Authenticator<SecretKey, SecretKey> {
     public static final String ALGORITHM_IDENTIFIER = "HmacSHA256";
+    @Serial
+    private static final long serialVersionUID = -4185231154547377403L;
 
     @Override
     public void initializeKeyPair() {
@@ -29,6 +33,14 @@ public class HmacSHA256 extends Authenticator<SecretKey, SecretKey> {
         SecretKeySpec keySpec = new SecretKeySpec(randomBytes, this.getAlgorithmIdentifier());
         this.setSigningKey(keySpec);
         this.setVerificationKey(keySpec);
+    }
+
+    @Override
+    public Verifier<SecretKey> getShareableVerifier() {
+        // Create new verifier from authenticator omitting the signing key
+        Verifier<SecretKey> verifier = new HmacSHA256();
+        verifier.setVerificationKey(this.getVerificationKey());
+        return verifier;
     }
 
     @Override

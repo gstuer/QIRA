@@ -6,6 +6,7 @@ import com.gstuer.qira.core.cryptography.signature.DigitalSignature;
 import com.gstuer.qira.core.cryptography.signature.Signer;
 import com.gstuer.qira.core.cryptography.signature.Verifier;
 
+import java.io.Serial;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -51,6 +52,8 @@ import java.security.spec.X509EncodedKeySpec;
  */
 public class MLDSA87 extends Authenticator<PrivateKey, PublicKey> {
     public static final String ALGORITHM_IDENTIFIER = "ML-DSA-87";
+    @Serial
+    private static final long serialVersionUID = -7645500141421282622L;
 
     @Override
     public DigitalSignature sign(byte[] data) throws InvalidKeyException, SignatureException {
@@ -128,5 +131,13 @@ public class MLDSA87 extends Authenticator<PrivateKey, PublicKey> {
         KeyPair keyPair = keyPairGenerator.generateKeyPair();
         this.setSigningKey(keyPair.getPrivate());
         this.setVerificationKey(keyPair.getPublic());
+    }
+
+    @Override
+    public Verifier<PublicKey> getShareableVerifier() {
+        // Create new verifier from authenticator omitting the signing key
+        Verifier<PublicKey> verifier = new MLDSA87();
+        verifier.setVerificationKey(this.getVerificationKey());
+        return verifier;
     }
 }
