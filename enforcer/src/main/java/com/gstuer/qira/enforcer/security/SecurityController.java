@@ -102,12 +102,8 @@ public class SecurityController {
         if (incomingMessage instanceof PayloadExchangeMessage message) {
             this.packetEgress.offer(message.getPayload());
         } else if (incomingMessage instanceof AuthenticatedMessage message) {
-            try {
-                if (message.verify(this.authenticator)) {
-                    this.handleIncomingRequest(message.getPayload());
-                }
-            } catch (SignatureException | InvalidKeyException exception) {
-                throw new RuntimeException(exception);
+            if (message.verify(this.authenticator)) {
+                this.handleIncomingRequest(message.getPayload());
             }
         } else if (incomingMessage instanceof EncryptedMessage message) {
             try {
