@@ -54,7 +54,7 @@ public class HmacSHA256 extends Authenticator<SecretKey, SecretKey> {
     }
 
     @Override
-    public boolean verify(byte[] data, DigitalSignature signature) throws InvalidKeyException {
+    public boolean verify(byte[] data, DigitalSignature signature) {
         Mac hmac;
         try {
             hmac = Mac.getInstance(this.getAlgorithmIdentifier());
@@ -62,7 +62,12 @@ public class HmacSHA256 extends Authenticator<SecretKey, SecretKey> {
             // Since the algorithm is static, this exception might only be thrown in case of an incompatible platform
             throw new UnsupportedOperationException(exception);
         }
-        hmac.init(this.getVerificationKey());
+
+        try {
+            hmac.init(this.getVerificationKey());
+        } catch (InvalidKeyException exception) {
+            return false;
+        }
         DigitalSignature verificationSignature = new DigitalSignature(hmac.doFinal(data), this.getAlgorithmIdentifier());
         return verificationSignature.equals(signature);
     }

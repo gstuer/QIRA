@@ -80,7 +80,7 @@ public class MLDSA44 extends Authenticator<PrivateKey, PublicKey> {
     }
 
     @Override
-    public boolean verify(byte[] data, DigitalSignature signature) throws InvalidKeyException, SignatureException {
+    public boolean verify(byte[] data, DigitalSignature signature) {
         Signature signer;
         try {
             signer = Signature.getInstance(ALGORITHM_IDENTIFIER);
@@ -88,9 +88,14 @@ public class MLDSA44 extends Authenticator<PrivateKey, PublicKey> {
             // Since the algorithm is static, this exception might only be thrown in case of an incompatible platform
             throw new UnsupportedOperationException(exception);
         }
-        signer.initVerify(this.getVerificationKey());
-        signer.update(data);
-        return signer.verify(signature.getData());
+
+        try {
+            signer.initVerify(this.getVerificationKey());
+            signer.update(data);
+            return signer.verify(signature.getData());
+        } catch (InvalidKeyException | SignatureException e) {
+            return false;
+        }
     }
 
     @Override
