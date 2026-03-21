@@ -3,10 +3,13 @@ package com.gstuer.qira.core.message;
 import com.gstuer.qira.core.cryptography.signature.DigitalSignature;
 import com.gstuer.qira.core.cryptography.signature.Verifier;
 
+import java.io.Serial;
 import java.net.InetAddress;
 import java.util.Objects;
 
 public class AuthenticatedMessage extends Message<Message<?>> {
+    @Serial
+    private static final long serialVersionUID = 8686283579840373862L;
     private final DigitalSignature signature;
 
     protected AuthenticatedMessage(InetAddress source, InetAddress destination, Message<?> payload, DigitalSignature signature) {

@@ -4,11 +4,14 @@ import com.gstuer.qira.core.cryptography.signcryption.Decrypter;
 import com.gstuer.qira.core.serialization.JsonProcessor;
 import com.gstuer.qira.core.serialization.SerializationException;
 
+import java.io.Serial;
 import java.net.InetAddress;
 import java.security.InvalidKeyException;
 import java.security.SignatureException;
 
 public class EncryptedMessage extends Message<byte[]> {
+    @Serial
+    private static final long serialVersionUID = 4039446179111666190L;
     private final String encrypterIdentifier;
 
     protected EncryptedMessage(InetAddress source, InetAddress destination, byte[] payload, String encrypterIdentifier) {

@@ -50,6 +50,7 @@ public class JsonProcessor {
         builder.registerTypeAdapter(Packet.class, new PacketSerializer());
         builder.registerTypeAdapter(Instant.class, new InstantSerializer());
         builder.registerTypeAdapter(Duration.class, new DurationSerializer());
+        builder.registerTypeAdapter(byte[].class, new ByteArrayAdapter());
 
         // Register hierarchy adapters for key classes
         builder.registerTypeHierarchyAdapter(SecretKey.class, new SecretKeyAdapter());
