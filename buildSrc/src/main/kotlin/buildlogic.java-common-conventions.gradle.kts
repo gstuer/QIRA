@@ -41,6 +41,8 @@ tasks.named<Test>("test") {
 }
 
 tasks.jar.configure {
-    from(configurations.runtimeClasspath.get().map(::zipTree))
+    from(configurations.runtimeClasspath.get().map(::zipTree)) {
+        exclude("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA")
+    }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
