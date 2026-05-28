@@ -136,6 +136,17 @@ public abstract class Message<T> implements Serializable, Signable, Encryptable 
     }
 
     /**
+     * Checks if destination of message equals destination of nested, i.e. encapsulated messages.
+     * Moreover, checks if destination equals external destination provided via parameter.
+     *
+     * @param externalDestination Related destination not contained within message object, e.g, TCP/UDP destination address of socket.
+     * @return True if destination is consistent and equals external destination. False otherwise.
+     */
+    public boolean hasConsistentDestination(InetAddress externalDestination) {
+        return this.getDestination().equals(externalDestination) && this.hasConsistentDestination();
+    }
+
+    /**
      * Checks if source of message equals source of nested, i.e. encapsulated messages.
      * May only be false for messages carrying other messages as payload.
      *
@@ -143,6 +154,17 @@ public abstract class Message<T> implements Serializable, Signable, Encryptable 
      */
     public boolean hasConsistentSource() {
         return true;
+    }
+
+    /**
+     * Checks if source of message equals source of nested, i.e. encapsulated messages.
+     * Moreover, checks if source equals external source provided via parameter.
+     *
+     * @param externalSource Related source not contained within message object, e.g, TCP/UDP sender address of socket.
+     * @return True if source is consistent and equals external source. False otherwise.
+     */
+    public boolean hasConsistentSource(InetAddress externalSource) {
+        return this.getSource().equals(externalSource) && this.hasConsistentSource();
     }
 
     protected boolean hasEqualPayload(Message<?> message) {
