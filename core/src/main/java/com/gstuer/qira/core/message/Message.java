@@ -125,6 +125,26 @@ public abstract class Message<T> implements Serializable, Signable, Encryptable 
         return json.getBytes(JsonProcessor.getDefaultCharset());
     }
 
+    /**
+     * Checks if destination of message equals destination of nested, i.e. encapsulated messages.
+     * May only be false for messages carrying other messages as payload.
+     *
+     * @return True if destination equals destination of payload, or if payload is no message. False otherwise.
+     */
+    public boolean hasConsistentDestination() {
+        return true;
+    }
+
+    /**
+     * Checks if source of message equals source of nested, i.e. encapsulated messages.
+     * May only be false for messages carrying other messages as payload.
+     *
+     * @return True if source equals source of payload, or if payload is no message. False otherwise.
+     */
+    public boolean hasConsistentSource() {
+        return true;
+    }
+
     protected boolean hasEqualPayload(Message<?> message) {
         return Objects.deepEquals(this.payload, message.getPayload());
     }

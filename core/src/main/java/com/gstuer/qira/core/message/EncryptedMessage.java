@@ -36,4 +36,14 @@ public class EncryptedMessage extends Message<byte[]> {
     public String getEncrypterIdentifier() {
         return encrypterIdentifier;
     }
+
+    @Override
+    public boolean hasConsistentDestination() {
+        throw new UnsupportedOperationException("Payload destination consistency cannot be checked due to encryption.");
+    }
+
+    @Override
+    public boolean hasConsistentSource() {
+        throw new UnsupportedOperationException("Payload destination consistency cannot be checked due to encryption.");
+    }
 }

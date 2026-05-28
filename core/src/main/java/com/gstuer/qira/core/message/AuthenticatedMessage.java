@@ -34,4 +34,16 @@ public class AuthenticatedMessage extends Message<Message<?>> {
     public Message<Message<?>> fromSource(InetAddress source) {
         return new AuthenticatedMessage(Objects.requireNonNull(source), this.getDestination(), this.getPayload(), this.getSignature());
     }
+
+    @Override
+    public boolean hasConsistentDestination() {
+        return this.getDestination().equals(this.getPayload().getDestination())
+                && this.getPayload().hasConsistentDestination();
+    }
+
+    @Override
+    public boolean hasConsistentSource() {
+        return this.getSource().equals(this.getPayload().getSource())
+                && this.getPayload().hasConsistentSource();
+    }
 }
