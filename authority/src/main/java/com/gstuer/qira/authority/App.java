@@ -3,9 +3,6 @@ package com.gstuer.qira.authority;
 import com.google.common.io.Files;
 import com.gstuer.qira.core.cryptography.signature.Authenticator;
 import com.gstuer.qira.core.cryptography.signature.algorithm.MLDSA87;
-import com.gstuer.qira.core.egress.DatagramEgressHandler;
-import com.gstuer.qira.core.ingress.DatagramIngressHandler;
-import com.gstuer.qira.core.message.Message;
 import com.gstuer.qira.core.serialization.JsonProcessor;
 import com.gstuer.qira.core.serialization.SerializationException;
 import org.apache.commons.cli.CommandLine;
@@ -18,15 +15,10 @@ import org.apache.commons.cli.ParseException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class App {
-    private static final int UDP_PORT_INCOMING = 10000;
-    private static final int UDP_PORT_OUTGOING = 10001;
-
     public static void main(String[] args) {
         System.out.println("IA - Identity Authority");
 
@@ -83,18 +75,12 @@ public class App {
             }
         }
 
-        // Construct controller
-        BlockingQueue<Message<?>> egressQueue = new LinkedBlockingQueue<>();
-        BindingMessageHandler messageHandler = new BindingMessageHandler(egressQueue, authenticator);
-
-        // Construct ingress and egress handlers
-        DatagramEgressHandler egressHandler = new DatagramEgressHandler(UDP_PORT_OUTGOING, UDP_PORT_INCOMING, egressQueue);
-        DatagramIngressHandler ingressHandler = new DatagramIngressHandler(UDP_PORT_INCOMING, messageHandler::handleRequest);
+        // Construct server
+        BindingServer bindingServer = new BindingServer(authenticator);
 
         // Start handler threads
-        ExecutorService threadPool = Executors.newFixedThreadPool(2);
-        threadPool.submit(egressHandler::open);
-        threadPool.submit(ingressHandler::open);
+        ExecutorService threadPool = Executors.newFixedThreadPool(1);
+        threadPool.submit(bindingServer::start);
     }
 
     private static CommandLine parseCommandLine(String[] args, boolean parseWithRequiredOptions) throws ParseException {

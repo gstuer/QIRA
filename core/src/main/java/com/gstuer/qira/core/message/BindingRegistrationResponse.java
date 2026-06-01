@@ -23,6 +23,7 @@ public class BindingRegistrationResponse extends Message<BindingRegistrationResp
     public enum ResponseType {
         CREATED,
         UPDATED,
+        EXISTS,
         FAILED;
     }
 }

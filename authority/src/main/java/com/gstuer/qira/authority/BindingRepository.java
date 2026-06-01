@@ -31,6 +31,10 @@ public class BindingRepository {
         return false;
     }
 
+    public boolean existsBinding(IdentityBinding binding) {
+        return this.bindings.contains(binding);
+    }
+
     public Optional<IdentityBinding> getBindingByEnforcerIdentity(InetAddress enforcerIdentity) {
         return this.bindings.parallelStream()
                 .filter(binding -> binding.getEnforcerIdentity().equals(enforcerIdentity))
