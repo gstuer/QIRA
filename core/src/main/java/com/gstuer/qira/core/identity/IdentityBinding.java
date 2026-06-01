@@ -17,9 +17,9 @@ public class IdentityBinding implements Serializable {
     private final Verifier<?> verifier;
 
     public IdentityBinding(InetAddress enforcerIdentity, MacAddress guardedIdentity, Verifier<?> verifier) {
-        this.enforcerIdentity = enforcerIdentity;
-        this.guardedIdentity = guardedIdentity;
-        this.verifier = verifier;
+        this.enforcerIdentity = Objects.requireNonNull(enforcerIdentity);
+        this.guardedIdentity = Objects.requireNonNull(guardedIdentity);
+        this.verifier = Objects.requireNonNull(verifier);
     }
 
     public InetAddress getEnforcerIdentity() {
