@@ -1,25 +1,28 @@
 package com.gstuer.qira.core.cryptography.signature;
 
+import com.gstuer.qira.core.encapsulation.EncapsulationException;
+import com.gstuer.qira.core.encapsulation.KeyedMessageEncapsulator;
+import com.gstuer.qira.core.message.AuthenticatedMessage;
+import com.gstuer.qira.core.message.Message;
+
 import java.io.Serial;
-import java.io.Serializable;
+import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.SignatureException;
 import java.util.Objects;
 
-public abstract class Authenticator<S extends Key, V extends Key> implements Signer<S>, Verifier<V>, Serializable {
+public abstract class Authenticator<S extends Key, V extends Key> extends KeyedMessageEncapsulator<S, V> implements Signer<S>, Verifier<V> {
     @Serial
     private static final long serialVersionUID = -6368161093200916637L;
 
-    private S signingKey;
-    private V verificationKey;
-
     @Override
     public V getVerificationKey() {
-        return this.verificationKey;
+        return this.getDecapsulationKey();
     }
 
     @Override
     public void setVerificationKey(V verificationKey) {
-        this.verificationKey = Objects.requireNonNull(verificationKey);
+        this.setDecapsulationKey(Objects.requireNonNull(verificationKey));
     }
 
     public abstract void initializeKeyPair();
@@ -32,20 +35,46 @@ public abstract class Authenticator<S extends Key, V extends Key> implements Sig
             return false;
         }
         Authenticator<?, ?> that = (Authenticator<?, ?>) object;
-        return Objects.equals(this.signingKey, that.signingKey) && Objects.equals(this.verificationKey, that.verificationKey);
+        return Objects.equals(this.getSigningKey(), that.getSigningKey()) && Objects.equals(this.getVerificationKey(), that.getVerificationKey());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.signingKey, this.verificationKey);
+        return Objects.hash(this.getSigningKey(), this.getVerificationKey());
     }
 
     protected S getSigningKey() {
-        return this.signingKey;
+        return this.getEncapsulationKey();
     }
 
     @Override
     public void setSigningKey(S signingKey) {
-        this.signingKey = Objects.requireNonNull(signingKey);
+        this.setEncapsulationKey(Objects.requireNonNull(signingKey));
+    }
+
+    @Override
+    protected KeyedTransformation<Message<?>, Message<?>, S> getEncapsulationTransformation() {
+        return (message, _)-> {
+            try {
+                return message.sign(this);
+            } catch (SignatureException | InvalidKeyException exception) {
+                throw new EncapsulationException("Signing failed: " + exception);
+            }
+        };
+    }
+
+    @Override
+    protected KeyedTransformation<Message<?>, Message<?>, V> getDecapsulationTransformation() {
+        return (message, _) -> {
+            if (message instanceof AuthenticatedMessage authenticatedMessage) {
+                if (authenticatedMessage.verify(this)) {
+                    return authenticatedMessage.getPayload();
+                } else {
+                    throw new EncapsulationException("Verification failed.");
+                }
+            } else {
+                throw new EncapsulationException("Incompatible encapsulation.");
+            }
+        };
     }
 }

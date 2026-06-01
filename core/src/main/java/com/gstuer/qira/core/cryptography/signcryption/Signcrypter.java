@@ -1,12 +1,21 @@
 package com.gstuer.qira.core.cryptography.signcryption;
 
+import com.gstuer.qira.core.encapsulation.EncapsulationException;
+import com.gstuer.qira.core.encapsulation.KeyedMessageEncapsulator;
+import com.gstuer.qira.core.message.EncryptedMessage;
+import com.gstuer.qira.core.message.Message;
+import com.gstuer.qira.core.serialization.SerializationException;
+
+import java.io.Serial;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.Security;
+import java.security.SignatureException;
 import java.util.Objects;
 
-public abstract class Signcrypter<S extends Key, V extends Key> implements Encrypter<S>, Decrypter<V> {
-    private S encryptionKey;
-    private V decryptionKey;
+public abstract class Signcrypter<S extends Key, V extends Key> extends KeyedMessageEncapsulator<S, V> implements Encrypter<S>, Decrypter<V> {
+    @Serial
+    private static final long serialVersionUID = -3692956892196228521L;
 
     protected Signcrypter() {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -16,21 +25,47 @@ public abstract class Signcrypter<S extends Key, V extends Key> implements Encry
 
     @Override
     public V getDecryptionKey() {
-        return this.decryptionKey;
+        return this.getDecapsulationKey();
     }
 
     @Override
     public void setDecryptionKey(V key) {
-        this.decryptionKey = Objects.requireNonNull(key);
+        this.setDecapsulationKey(Objects.requireNonNull(key));
     }
 
     @Override
     public S getEncryptionKey() {
-        return this.encryptionKey;
+        return this.getEncapsulationKey();
     }
 
     @Override
     public void setEncryptionKey(S key) {
-        this.encryptionKey = Objects.requireNonNull(key);
+        this.setEncapsulationKey(Objects.requireNonNull(key));
+    }
+
+    @Override
+    protected KeyedTransformation<Message<?>, Message<?>, S> getEncapsulationTransformation() {
+        return (message, _) -> {
+            try {
+                return message.encrypt(this);
+            } catch (InvalidKeyException exception) {
+                throw new EncapsulationException("Signcryption failed: " + exception);
+            }
+        };
+    }
+
+    @Override
+    protected KeyedTransformation<Message<?>, Message<?>, V> getDecapsulationTransformation() {
+        return  (message, _) -> {
+            if (message instanceof EncryptedMessage encryptedMessage) {
+                try {
+                    return encryptedMessage.decrypt(this);
+                } catch (SerializationException | SignatureException | InvalidKeyException exception) {
+                    throw new EncapsulationException("Unsigncryption failed: " + exception);
+                }
+            } else {
+                throw new EncapsulationException("Incompatible encapsulation.");
+            }
+        };
     }
 }
