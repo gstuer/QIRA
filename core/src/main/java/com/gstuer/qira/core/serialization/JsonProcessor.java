@@ -9,6 +9,10 @@ import com.gstuer.qira.core.cryptography.signature.algorithm.HmacSHA256;
 import com.gstuer.qira.core.cryptography.signature.algorithm.MLDSA44;
 import com.gstuer.qira.core.cryptography.signature.algorithm.MLDSA65;
 import com.gstuer.qira.core.cryptography.signature.algorithm.MLDSA87;
+import com.gstuer.qira.core.cryptography.signcryption.algorithm.AES256CCM;
+import com.gstuer.qira.core.cryptography.signcryption.algorithm.AES256GCM;
+import com.gstuer.qira.core.cryptography.signcryption.algorithm.ChaCha20Poly1305;
+import com.gstuer.qira.core.encapsulation.KeyedMessageEncapsulator;
 import com.gstuer.qira.core.identity.query.EnforcerQuery;
 import com.gstuer.qira.core.identity.query.GuardedQuery;
 import com.gstuer.qira.core.identity.query.IdentityQuery;
@@ -26,6 +30,7 @@ import com.gstuer.qira.core.message.PayloadExchangeMessage;
 import org.pcap4j.packet.Packet;
 
 import javax.crypto.SecretKey;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
@@ -54,6 +59,7 @@ public class JsonProcessor {
         builder.registerTypeAdapter(Instant.class, new InstantSerializer());
         builder.registerTypeAdapter(Duration.class, new DurationSerializer());
         builder.registerTypeAdapter(byte[].class, new ByteArrayAdapter());
+        builder.registerTypeAdapter(Verifier.class, new VerifierSerializer());
 
         // Register hierarchy adapters for key classes
         builder.registerTypeHierarchyAdapter(SecretKey.class, new SecretKeyAdapter());
@@ -84,16 +90,19 @@ public class JsonProcessor {
                 .recognizeSubtypes();
         builder.registerTypeAdapterFactory(identityQueryAdapterFactory);
 
-        // Type factory for verifiers
-        RuntimeTypeAdapterFactory<?> verifierAdapterFactory = RuntimeTypeAdapterFactory
-                .of(Verifier.class)
+        // Type factory for message encapsulators
+        RuntimeTypeAdapterFactory<?> encapsulatorAdapterFactory = RuntimeTypeAdapterFactory
+                .of(KeyedMessageEncapsulator.class)
+                .registerSubtype(AES256CCM.class)
+                .registerSubtype(AES256GCM.class)
+                .registerSubtype(ChaCha20Poly1305.class)
                 .registerSubtype(AES256GMAC.class)
                 .registerSubtype(HmacSHA256.class)
                 .registerSubtype(MLDSA44.class)
                 .registerSubtype(MLDSA65.class)
                 .registerSubtype(MLDSA87.class)
                 .recognizeSubtypes();
-        builder.registerTypeAdapterFactory(verifierAdapterFactory);
+        builder.registerTypeAdapterFactory(encapsulatorAdapterFactory);
 
         this.gson = builder.create();
     }
@@ -105,6 +114,14 @@ public class JsonProcessor {
     public String convertToJson(Object object) throws SerializationException {
         try {
             return this.gson.toJson(object);
+        } catch (JsonParseException exception) {
+            throw new SerializationException(exception);
+        }
+    }
+
+    public String convertToJson(Object object, Type objectType) throws SerializationException {
+        try {
+            return this.gson.toJson(object, objectType);
         } catch (JsonParseException exception) {
             throw new SerializationException(exception);
         }
