@@ -29,20 +29,6 @@ public abstract class Authenticator<S extends Key, V extends Key> extends KeyedM
 
     public abstract Verifier<V> getShareableVerifier();
 
-    @Override
-    public boolean equals(Object object) {
-        if (object == null || getClass() != object.getClass()) {
-            return false;
-        }
-        Authenticator<?, ?> that = (Authenticator<?, ?>) object;
-        return Objects.equals(this.getSigningKey(), that.getSigningKey()) && Objects.equals(this.getVerificationKey(), that.getVerificationKey());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.getSigningKey(), this.getVerificationKey());
-    }
-
     protected S getSigningKey() {
         return this.getEncapsulationKey();
     }

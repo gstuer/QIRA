@@ -5,6 +5,7 @@ import com.gstuer.qira.core.message.Message;
 import java.io.Serial;
 import java.io.Serializable;
 import java.security.Key;
+import java.util.Objects;
 
 public abstract class KeyedMessageEncapsulator<S extends Key, V extends Key> implements Serializable {
     @Serial
@@ -19,6 +20,21 @@ public abstract class KeyedMessageEncapsulator<S extends Key, V extends Key> imp
 
     public Message<?> decapsulate(Message<?> message) throws EncapsulationException {
         return this.getDecapsulationTransformation().apply(message, this.decapsulationKey);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        KeyedMessageEncapsulator<?, ?> that = (KeyedMessageEncapsulator<?, ?>) object;
+        return Objects.equals(this.getEncapsulationKey(), that.getEncapsulationKey())
+                && Objects.equals(this.getDecapsulationKey(), that.getDecapsulationKey());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getEncapsulationKey(), this.getDecapsulationKey());
     }
 
     protected S getEncapsulationKey() {
