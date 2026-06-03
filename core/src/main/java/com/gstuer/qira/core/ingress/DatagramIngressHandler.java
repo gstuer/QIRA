@@ -11,23 +11,25 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class DatagramIngressHandler extends IngressHandler<Message<?>> {
+    private final InetAddress address;
     private final int port;
     private DatagramSocket socket;
 
-    public DatagramIngressHandler(int port, Consumer<Message<?>> messageConsumer) {
+    public DatagramIngressHandler(InetAddress address, int port, Consumer<Message<?>> messageConsumer) {
         super(messageConsumer);
+        this.address = Objects.requireNonNull(address);
         this.port = port;
     }
 
     @Override
     public void open() {
-        DatagramSocket socket;
         try {
-            socket = new DatagramSocket(new InetSocketAddress("0.0.0.0", port));
-            while (!socket.isClosed()) {
+            this.socket = new DatagramSocket(new InetSocketAddress(address, port));
+            while (!this.socket.isClosed()) {
                 byte[] buffer = new byte[socket.getReceiveBufferSize()];
                 DatagramPacket datagram = new DatagramPacket(buffer, buffer.length);
                 socket.receive(datagram);
@@ -50,7 +52,7 @@ public class DatagramIngressHandler extends IngressHandler<Message<?>> {
     }
 
     protected void handle(DatagramPacket datagram) {
-        // Deserialize access control message transmitted
+        // Deserialize message transmitted
         JsonProcessor jsonProcessor = new JsonProcessor();
         Message<?> message;
         try {
@@ -60,9 +62,16 @@ public class DatagramIngressHandler extends IngressHandler<Message<?>> {
             return;
         }
 
-        // Get sender of datagram and set sender of access control message
+        // Get sender of datagram & check or set sender of message
         InetAddress sender = datagram.getAddress();
-        message = message.fromSource(sender);
+        if (!sender.equals(message.getSource())) {
+            System.err.println("[Ingress Datagram] Inconsistent source of message. Source spoofing possible.");
+            return;
+        } else if (!message.getDestination().equals(this.address)) {
+            System.err.println("[Ingress Datagram] Inconsistent destination of message. Destination spoofing possible.");
+            return;
+        }
+
         super.handle(message);
     }
 }

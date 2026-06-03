@@ -7,18 +7,22 @@ import com.gstuer.qira.core.serialization.SerializationException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 
 public class DatagramEgressHandler extends EgressHandler<Message<?>> {
+    private final InetAddress address;
     private final int sourcePort;
     private final int destinationPort;
     private DatagramSocket socket;
 
-    public DatagramEgressHandler(int sourcePort, int destinationPort, BlockingQueue<Message<?>> egressQueue) {
+    public DatagramEgressHandler(InetAddress address, int sourcePort, int destinationPort, BlockingQueue<Message<?>> egressQueue) {
         super(egressQueue);
+        this.address = Objects.requireNonNull(address);
         this.sourcePort = sourcePort;
         this.destinationPort = destinationPort;
     }
@@ -31,7 +35,7 @@ public class DatagramEgressHandler extends EgressHandler<Message<?>> {
 
         // Try to open a new datagram socket (UDP communication)
         try {
-            socket = new DatagramSocket(new InetSocketAddress("0.0.0.0", this.sourcePort));
+            socket = new DatagramSocket(new InetSocketAddress(address, this.sourcePort));
         } catch (SocketException exception) {
             throw new IllegalStateException("UDP egress handler cannot be opened for port " + this.sourcePort, exception);
         }
@@ -55,6 +59,11 @@ public class DatagramEgressHandler extends EgressHandler<Message<?>> {
             throw new IllegalStateException("Handler not opened yet.");
         } else if (this.socket.isClosed()) {
             throw new IllegalStateException("Handler already closed.");
+        }
+
+        // Add address of socket as source of message if missing
+        if (Objects.isNull(message.getSource())) {
+            message = message.fromSource(this.address);
         }
 
         try {
