@@ -1,5 +1,6 @@
 package com.gstuer.qira.core.cryptography.signcryption;
 
+import com.gstuer.qira.core.serialization.JsonProcessor;
 import org.junit.jupiter.api.Test;
 
 import java.security.InvalidKeyException;
@@ -51,6 +52,23 @@ public abstract class SigncrypterTest<T extends Signcrypter<?, ?>> {
         System.out.println("Ciphertext Byte: " + encryptedData.length);
         System.out.println("Signcrypt Duration (ms): " + signcryptDuration.toNanos() / Math.pow(10, 6));
         System.out.println("Unsigncrypt Duration (ms): " + unsigncryptDuration.toNanos() / Math.pow(10, 6));
+    }
+
+    @Test
+    public void testCipherSerializable() throws Throwable {
+        Signcrypter<?, ?> signcrypter = this.getSigncrypter();
+
+        // Check that cipher is correct and does not contain key material
+        assertNull(signcrypter.getEncryptionKey());
+        assertNull(signcrypter.getDecryptionKey());
+
+        // Check that verifier is serializable and deserializable
+        JsonProcessor jsonProcessor = new JsonProcessor();
+        Signcrypter<?, ?> deserialSigncrypter = jsonProcessor.deserialize(jsonProcessor.serialize(signcrypter), Signcrypter.class);
+        assertEquals(signcrypter.getClass(), deserialSigncrypter.getClass());
+        assertEquals(signcrypter.getAlgorithmIdentifier(), deserialSigncrypter.getAlgorithmIdentifier());
+        assertNull(deserialSigncrypter.getEncryptionKey());
+        assertNull(deserialSigncrypter.getDecryptionKey());
     }
 
     protected abstract T constructSigncrypter();

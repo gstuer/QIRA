@@ -65,7 +65,7 @@ public abstract class AuthenticatorTest<T extends Authenticator<?, ?>> {
 
         // Check that verifier is serializable and deserializable
         JsonProcessor jsonProcessor = new JsonProcessor();
-        Verifier<?> deserialVerifier = (Authenticator<?, ?>) jsonProcessor.deserialize(jsonProcessor.serialize(verifier), Authenticator.class);
+        Verifier<?> deserialVerifier = jsonProcessor.deserialize(jsonProcessor.serialize(verifier), Verifier.class);
         assertEquals(verifier.getClass(), deserialVerifier.getClass());
         assertEquals(verifier.getAlgorithmIdentifier(), deserialVerifier.getAlgorithmIdentifier());
         assertEquals(verifier.getVerificationKey(), deserialVerifier.getVerificationKey());
