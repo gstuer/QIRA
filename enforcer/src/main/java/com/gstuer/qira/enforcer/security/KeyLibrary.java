@@ -13,6 +13,7 @@ import com.gstuer.qira.core.handshake.HandshakeException;
 import com.gstuer.qira.core.handshake.HandshakeServer;
 import com.gstuer.qira.core.identity.IdentityBinding;
 import com.gstuer.qira.core.identity.query.EnforcerQuery;
+import com.gstuer.qira.core.identity.query.GuardedQuery;
 import com.gstuer.qira.core.identity.query.IdentityQuery;
 import com.gstuer.qira.core.message.BindingQueryRequest;
 import com.gstuer.qira.core.message.BindingQueryResponse;
@@ -23,6 +24,7 @@ import com.gstuer.qira.core.message.KeyExchangeInitializationMessage;
 import com.gstuer.qira.core.message.KeyExchangeMessage;
 import com.gstuer.qira.core.serialization.JsonProcessor;
 import com.gstuer.qira.core.serialization.SerializationException;
+import org.apache.commons.lang3.tuple.Pair;
 import org.pcap4j.util.MacAddress;
 
 import javax.crypto.DecapsulateException;
@@ -41,8 +43,11 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -62,7 +67,7 @@ public class KeyLibrary {
 
     private final Set<IdentityBinding> externalBindings;
     private final HashMap<InetAddress, KeyedMessageEncapsulator<?, ?>> messageDecapsulators;
-    private final HashMap<InetAddress, KeyedMessageEncapsulator<?, ?>> messageEncapsulators;
+    private final HashMap<MacAddress, Pair<InetAddress, KeyedMessageEncapsulator<?, ?>>> messageEncapsulators;
 
     private final KeyExchangeServer keyExchangeServer;
 
@@ -130,7 +135,6 @@ public class KeyLibrary {
     }
 
     public Set<IdentityBinding> resolveIdentity(IdentityQuery query) throws HandshakeException {
-        // TODO Update broadcast/multicast bindings periodically
         // Perform local lookup
         Set<IdentityBinding> bindings = this.externalBindings.parallelStream()
                 .filter(query::fits)
@@ -168,19 +172,40 @@ public class KeyLibrary {
         return Optional.ofNullable(this.messageDecapsulators.get(enforcerIdentity));
     }
 
-    public Optional<KeyedMessageEncapsulator<?, ?>> getMessageEncapsulator(IdentityBinding remoteBinding) {
-        KeyedMessageEncapsulator<?, ?> messageEncapsulator;
+    public Collection<Pair<InetAddress, KeyedMessageEncapsulator<?, ?>>> getTuplesDEM(MacAddress receiverAddress) {
+        if (!receiverAddress.isUnicast() && !this.messageEncapsulators.isEmpty()) {
+            // TODO Update broadcast/multicast bindings periodically
+            // If address is multicast or broadcast, return all encapsulators
+            return this.messageEncapsulators.values();
+        }
+
+        // If address is unicast, perform lookup for specific enforcer
         try {
-            // Perform local lookup & establish new key if necessary
-            messageEncapsulator = this.messageEncapsulators.get(remoteBinding.getEnforcerIdentity());
-            if (Objects.isNull(messageEncapsulator)) {
-                messageEncapsulator = this.establishDataEncapsulationKey(remoteBinding);
+            // Perform local lookup
+            Pair<InetAddress, KeyedMessageEncapsulator<?, ?>> localEncapsulator = this.messageEncapsulators.get(receiverAddress);
+            if (Objects.isNull(localEncapsulator)) {
+                // Establish new key if necessary
+                GuardedQuery guardedQuery = new GuardedQuery(receiverAddress);
+                Set<IdentityBinding> enforcerBindings = this.resolveIdentity(guardedQuery);
+                List<Pair<InetAddress, KeyedMessageEncapsulator<?, ?>>> establishedEncapsulators = new ArrayList<>();
+
+                // Establish new bindings in parallel
+                enforcerBindings.parallelStream().forEach(binding -> {
+                    try {
+                        establishedEncapsulators.add(Pair.of(binding.getEnforcerIdentity(), this.establishDataEncapsulationKey(binding)));
+                    } catch (HandshakeException exception) {
+                        System.out.println("[Key Library] DEM establishment with " + binding.getEnforcerIdentity() + " failed.");
+                        exception.printStackTrace();
+                    }
+                });
+                return establishedEncapsulators;
+            } else {
+                return List.of(localEncapsulator);
             }
-            return Optional.of(messageEncapsulator);
         } catch (HandshakeException exception) {
             System.out.println("[Key Library] Message encapsulator retrieval failed.");
             exception.printStackTrace();
-            return Optional.empty();
+            return List.of();
         }
     }
 
@@ -190,10 +215,6 @@ public class KeyLibrary {
 
     public void stopKeyExchangeServer() throws IOException {
         this.keyExchangeServer.stop();
-    }
-
-    public IdentityBinding getOwnBinding() {
-        return ownBinding;
     }
 
     private KeyedMessageEncapsulator<?, ?> establishDataEncapsulationKey(IdentityBinding receiverBinding) throws HandshakeException {
@@ -228,7 +249,7 @@ public class KeyLibrary {
             outgoingEncapsulator.setEncapsulationKey(secretKey);
 
             // Step 5: Persist DEM_ij in library
-            this.messageEncapsulators.put(receiverBinding.getEnforcerIdentity(), outgoingEncapsulator);
+            this.messageEncapsulators.put(receiverBinding.getGuardedIdentity(), Pair.of(receiverBinding.getEnforcerIdentity(), outgoingEncapsulator));
             System.out.println("[Key Library] Self-initiated DEM with " + receiverBinding.getEnforcerIdentity() + " established.");
             return outgoingEncapsulator;
         } catch (IOException | SerializationException | SignatureException |
@@ -310,7 +331,6 @@ public class KeyLibrary {
             } catch (IOException | SerializationException | SignatureException | NoSuchAlgorithmException
                      | InvalidKeySpecException | HandshakeException | InvalidKeyException | DecapsulateException exception) {
                 System.out.println("[Key Library] Externally-initiated key exchange handshake failed: " + exception);
-                return;
             }
         }
     }

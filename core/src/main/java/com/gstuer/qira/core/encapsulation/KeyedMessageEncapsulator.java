@@ -14,13 +14,9 @@ public abstract class KeyedMessageEncapsulator<S extends Key, V extends Key> imp
     private S encapsulationKey;
     private V decapsulationKey;
 
-    public Message<?> encapsulate(Message<?> message) throws EncapsulationException {
-        return this.getEncapsulationTransformation().apply(message, this.encapsulationKey);
-    }
+    public abstract Message<?> encapsulate(Message<?> message) throws EncapsulationException;
 
-    public Message<?> decapsulate(Message<?> message) throws EncapsulationException {
-        return this.getDecapsulationTransformation().apply(message, this.decapsulationKey);
-    }
+    public abstract Message<?> decapsulate(Message<?> message) throws EncapsulationException;
 
     @Override
     public boolean equals(Object object) {
@@ -52,10 +48,6 @@ public abstract class KeyedMessageEncapsulator<S extends Key, V extends Key> imp
     public void setDecapsulationKey(V decapsulationKey) {
         this.decapsulationKey = decapsulationKey;
     }
-
-    protected abstract KeyedTransformation<Message<?>, Message<?>, S> getEncapsulationTransformation();
-
-    protected abstract KeyedTransformation<Message<?>, Message<?>, V> getDecapsulationTransformation();
 
     public interface KeyedTransformation<T, R, K> {
         R apply(T value, K key) throws EncapsulationException;

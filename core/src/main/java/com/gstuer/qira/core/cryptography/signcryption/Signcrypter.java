@@ -44,28 +44,24 @@ public abstract class Signcrypter<S extends Key, V extends Key> extends KeyedMes
     }
 
     @Override
-    protected KeyedTransformation<Message<?>, Message<?>, S> getEncapsulationTransformation() {
-        return (message, _) -> {
-            try {
-                return message.encrypt(this);
-            } catch (InvalidKeyException exception) {
-                throw new EncapsulationException("Signcryption failed: " + exception);
-            }
-        };
+    public Message<?> encapsulate(Message<?> message) throws EncapsulationException {
+        try {
+            return message.encrypt(this);
+        } catch (InvalidKeyException exception) {
+            throw new EncapsulationException("Signcryption failed: " + exception);
+        }
     }
 
     @Override
-    protected KeyedTransformation<Message<?>, Message<?>, V> getDecapsulationTransformation() {
-        return  (message, _) -> {
-            if (message instanceof EncryptedMessage encryptedMessage) {
-                try {
-                    return encryptedMessage.decrypt(this);
-                } catch (SerializationException | SignatureException | InvalidKeyException exception) {
-                    throw new EncapsulationException("Unsigncryption failed: " + exception);
-                }
-            } else {
-                throw new EncapsulationException("Incompatible encapsulation.");
+    public Message<?> decapsulate(Message<?> message) throws EncapsulationException {
+        if (message instanceof EncryptedMessage encryptedMessage) {
+            try {
+                return encryptedMessage.decrypt(this);
+            } catch (SerializationException | SignatureException | InvalidKeyException exception) {
+                throw new EncapsulationException("Unsigncryption failed: " + exception);
             }
-        };
+        } else {
+            throw new EncapsulationException("Incompatible encapsulation.");
+        }
     }
 }

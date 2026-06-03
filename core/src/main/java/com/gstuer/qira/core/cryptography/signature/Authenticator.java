@@ -29,6 +29,28 @@ public abstract class Authenticator<S extends Key, V extends Key> extends KeyedM
 
     public abstract Verifier<V> getShareableVerifier();
 
+    @Override
+    public Message<?> decapsulate(Message<?> message) throws EncapsulationException {
+        if (message instanceof AuthenticatedMessage authenticatedMessage) {
+            if (authenticatedMessage.verify(this)) {
+                return authenticatedMessage.getPayload();
+            } else {
+                throw new EncapsulationException("Verification failed.");
+            }
+        } else {
+            throw new EncapsulationException("Incompatible encapsulation.");
+        }
+    }
+
+    @Override
+    public AuthenticatedMessage encapsulate(Message<?> message) throws EncapsulationException {
+        try {
+            return message.sign(this);
+        } catch (SignatureException | InvalidKeyException exception) {
+            throw new EncapsulationException("Signing failed: " + exception);
+        }
+    }
+
     protected S getSigningKey() {
         return this.getEncapsulationKey();
     }
@@ -36,31 +58,5 @@ public abstract class Authenticator<S extends Key, V extends Key> extends KeyedM
     @Override
     public void setSigningKey(S signingKey) {
         this.setEncapsulationKey(Objects.requireNonNull(signingKey));
-    }
-
-    @Override
-    protected KeyedTransformation<Message<?>, Message<?>, S> getEncapsulationTransformation() {
-        return (message, _)-> {
-            try {
-                return message.sign(this);
-            } catch (SignatureException | InvalidKeyException exception) {
-                throw new EncapsulationException("Signing failed: " + exception);
-            }
-        };
-    }
-
-    @Override
-    protected KeyedTransformation<Message<?>, Message<?>, V> getDecapsulationTransformation() {
-        return (message, _) -> {
-            if (message instanceof AuthenticatedMessage authenticatedMessage) {
-                if (authenticatedMessage.verify(this)) {
-                    return authenticatedMessage.getPayload();
-                } else {
-                    throw new EncapsulationException("Verification failed.");
-                }
-            } else {
-                throw new EncapsulationException("Incompatible encapsulation.");
-            }
-        };
     }
 }

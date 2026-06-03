@@ -2,17 +2,16 @@ package com.gstuer.qira.enforcer.security;
 
 import com.gstuer.qira.core.encapsulation.EncapsulationException;
 import com.gstuer.qira.core.encapsulation.KeyedMessageEncapsulator;
-import com.gstuer.qira.core.handshake.HandshakeException;
-import com.gstuer.qira.core.identity.IdentityBinding;
-import com.gstuer.qira.core.identity.query.GuardedQuery;
 import com.gstuer.qira.core.message.Message;
 import com.gstuer.qira.core.message.PayloadExchangeMessage;
+import org.apache.commons.lang3.tuple.Pair;
 import org.pcap4j.packet.EthernetPacket;
 import org.pcap4j.packet.Packet;
 
+import java.net.InetAddress;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
 public class SecurityController {
@@ -27,32 +26,19 @@ public class SecurityController {
     }
 
     public void handleOutgoingRequest(Packet packet) {
-        // Step 1: Perform enforcer binding lookup
-        IdentityBinding ownBinding = this.keyLibrary.getOwnBinding();
+        // Step 1: Perform data encapsulation mechanism (DEM) lookup
         EthernetPacket.EthernetHeader packetHeader = (EthernetPacket.EthernetHeader) packet.getHeader();
-        GuardedQuery identityQuery = new GuardedQuery(packetHeader.getDstAddr());
-        Set<IdentityBinding> bindings;
-        try {
-            bindings = this.keyLibrary.resolveIdentity(identityQuery);
-        } catch (HandshakeException exception) {
-            System.out.println("[Security Controller | Outgoing] Lookup of enforcer identity failed: " + exception);
-            return;
-        }
+        Collection<Pair<InetAddress, KeyedMessageEncapsulator<?, ?>>> encapsulators = this.keyLibrary.getTuplesDEM(packetHeader.getDstAddr());
 
-        // Step 2: Perform data encapsulation mechanism (DEM) lookup
-        bindings.parallelStream().forEach(binding -> {
-            Optional<KeyedMessageEncapsulator<?, ?>> optionalEncapsulator = this.keyLibrary.getMessageEncapsulator(binding);
-            optionalEncapsulator.ifPresent(encapsulator -> {
-                // Step 3: Encapsulate Ethernet frame into payload exchange message
-                PayloadExchangeMessage payloadMessage = new PayloadExchangeMessage(ownBinding.getEnforcerIdentity(),
-                        binding.getEnforcerIdentity(), packet);
-                try {
-                    // Step 4: Apply cryptographic encapsulation & add encapsulated message to
-                    this.messageEgress.add(encapsulator.encapsulate(payloadMessage));
-                } catch (EncapsulationException exception) {
-                    System.out.println("[Security Controller | Outgoing] Encapsulation of payload exchange failed: " + exception);
-                }
-            });
+        encapsulators.forEach(encapsulator -> {
+            // Step 2: Encapsulate Ethernet frame into payload exchange message
+            PayloadExchangeMessage payloadMessage = new PayloadExchangeMessage(encapsulator.getKey(), packet);
+            try {
+                // Step 3: Apply cryptographic encapsulation & add encapsulated message to
+                this.messageEgress.add(encapsulator.getValue().encapsulate(payloadMessage));
+            } catch (EncapsulationException exception) {
+                System.out.println("[Security Controller | Outgoing] Encapsulation of payload exchange failed: " + exception);
+            }
         });
     }
 
