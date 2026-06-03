@@ -17,7 +17,10 @@ import com.gstuer.qira.core.message.BindingQueryRequest;
 import com.gstuer.qira.core.message.BindingQueryResponse;
 import com.gstuer.qira.core.message.BindingRegistrationRequest;
 import com.gstuer.qira.core.message.BindingRegistrationResponse;
+import com.gstuer.qira.core.message.CipherExchangeMessage;
 import com.gstuer.qira.core.message.EncryptedMessage;
+import com.gstuer.qira.core.message.KeyExchangeInitializationMessage;
+import com.gstuer.qira.core.message.KeyExchangeMessage;
 import com.gstuer.qira.core.message.Message;
 import com.gstuer.qira.core.message.PayloadExchangeMessage;
 import org.pcap4j.packet.Packet;
@@ -67,9 +70,9 @@ public class JsonProcessor {
                 .registerSubtype(BindingRegistrationResponse.class)
                 .registerSubtype(BindingQueryRequest.class)
                 .registerSubtype(BindingQueryResponse.class)
-//                .registerSubtype(KeyExchangeMessage.class)
-//                .registerSubtype(KeyEstablishmentRequestMessage.class)
-//                .registerSubtype(KeyEstablishmentResponseMessage.class)
+                .registerSubtype(CipherExchangeMessage.class)
+                .registerSubtype(KeyExchangeMessage.class)
+                .registerSubtype(KeyExchangeInitializationMessage.class)
                 .recognizeSubtypes();
         builder.registerTypeAdapterFactory(messageAdapterFactory);
 
