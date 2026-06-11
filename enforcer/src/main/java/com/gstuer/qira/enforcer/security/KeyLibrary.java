@@ -54,7 +54,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class KeyLibrary {
-    private static final File AUTHENTICATOR_FILE = new File("./identity_authenticator.json");
+    private static final File AUTHENTICATOR_FILE = new File("./authenticator_cep.json");
     private static final String KEM_ALGORITHM_IDENTIFIER = "ML-KEM-1024";
     private static final int KEY_EXCHANGE_SERVER_PORT = 10008;
 

@@ -1,4 +1,11 @@
 ###
+### QIRA
+###
+### Serialized Authenticators
+authenticator*.json
+verifier*.json
+
+###
 ### Java
 ###
 # Compiled class file
