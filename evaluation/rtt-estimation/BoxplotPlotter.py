@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # Add a baseline with a fixed value
     fontsize = 14
     #plt.axhline(y=20, color='#2c3e50', linestyle='--', label=f'Medium Latency < 20 ms')
-    plt.axhline(y=6, color='gray', linestyle='--', label=f'Low Latency < 6 ms')
+    plt.axhline(y=6, color='gray', linestyle='--', label=f'IEC 61850 Constraint: GOOSE & SV')
     plt.legend(fontsize=fontsize)
 
     # Add labels
