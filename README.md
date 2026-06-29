@@ -34,7 +34,9 @@ Each run of the performance analysis is represented by a result file in the JSON
 ```
 
 ## Publications
-- Submissions are already in progress...
+- Moritz Gstür, Mohammed Ramadan, and Veit Hagenmeyer. 2026. Quantum-Resistant Crypto-Agile Inline Authentication and Encryption Framework for IEC 61850 Digital Substations. In Proceedings of the 2026 ACM Sustainability Week (ACM Sustainability Week '26). Association for Computing Machinery, New York, NY, USA, 1–8. doi:[10.1145/3765611.3815134](https://doi.org/10.1145/3765611.3815134)
+
+- More are already in progress...
 
 ## License
 This project is licensed under the **European Union Public License 1.2**. See the LICENSE file for more details.
