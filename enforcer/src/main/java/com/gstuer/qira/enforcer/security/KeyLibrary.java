@@ -310,10 +310,12 @@ public class KeyLibrary {
                     // TODO Make changing easier, i.e. more crypto agile
                     incomingDecapsulator = new HmacSHA256();
                     outgoingEncapsulator = new HmacSHA256();
+                    System.out.println("[Key Library] Established HMAC-SHA-256 data encapsulation.");
                 } else if (requestedSecurityLevel == KeyExchangeInitializationMessage.SecurityLevel.AUTHENTICATED_ENCRYPTION) {
                     // TODO Make changing easier, i.e. more crypto agile
                     incomingDecapsulator = new ChaCha20Poly1305();
                     outgoingEncapsulator = new ChaCha20Poly1305();
+                    System.out.println("[Key Library] Established ChaCha20-Poly1305 data encapsulation.");
                 } else {
                     throw new HandshakeException("Unsupported DEM security level requested.");
                 }
